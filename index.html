@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jacob Counter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      font-family: Arial, Helvetica, sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      background: #fff;
+      border: 3px solid #ccc;
+      border-radius: 8px;
+      padding: 48px 64px;
+      text-align: center;
+      max-width: 580px;
+      width: 90vw;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+    }
+
+    .label {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #111;
+      line-height: 1.2;
+      margin-bottom: 32px;
+    }
+
+    .number-display {
+      font-size: 4.5rem;
+      font-weight: 900;
+      color: #e00;
+      line-height: 1.2;
+      min-height: 1.4em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-variant-numeric: tabular-nums;
+      transition: font-size 0.2s ease;
+    }
+
+    .number-display.scientific {
+      font-size: 2.8rem;
+    }
+
+    .number-display sup {
+      font-size: 0.55em;
+      vertical-align: super;
+    }
+
+    .sub-label {
+      font-size: 1rem;
+      color: #888;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+
+    /* ── Overflow message ── */
+    .overflow-msg {
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: #e00;
+      margin-top: 28px;
+      letter-spacing: 0.05em;
+      opacity: 0;
+      transform: scale(3);
+    }
+
+    @keyframes textSlam {
+      0%   { opacity: 0; transform: scale(3.5);  color: #e00; }
+      18%  { opacity: 1; transform: scale(0.85); color: #e00; }
+      32%  { transform: scale(1.12); }
+      48%  { transform: scale(0.95); }
+      62%  { transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1);    color: #111; }
+    }
+
+    .overflow-msg.slam {
+      animation: textSlam 0.6s cubic-bezier(.22,1,.36,1) forwards;
+    }
+
+    /* ── Impact effects ── */
+    @keyframes cardShake {
+      0%   { transform: translate(0, 0) rotate(0deg); }
+      12%  { transform: translate(-10px, -5px) rotate(-1.5deg); }
+      24%  { transform: translate(10px, 5px) rotate(1.5deg); }
+      36%  { transform: translate(-7px, 2px) rotate(-0.8deg); }
+      48%  { transform: translate(5px, -2px) rotate(0.5deg); }
+      64%  { transform: translate(-3px, 1px); }
+      80%  { transform: translate(1px, 0); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @keyframes cardFlash {
+      0%   { background: #fff; box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+      10%  { background: #ffdddd; box-shadow: 0 0 80px 30px rgba(220,0,0,0.55); }
+      30%  { background: #fff3f3; box-shadow: 0 0 40px 15px rgba(220,0,0,0.25); }
+      100% { background: #fff;    box-shadow: 0 4px 24px rgba(0,0,0,0.1); }
+    }
+
+    .card.impact {
+      animation: cardShake 0.55s ease-out both, cardFlash 0.9s ease-out both;
+    }
+
+    /* ── Emoji particles ── */
+    .emoji-particle {
+      position: fixed;
+      pointer-events: none;
+      z-index: 999;
+      user-select: none;
+      animation: floatUp var(--dur) ease-out forwards;
+      font-size: var(--size);
+      left: var(--x);
+      top: var(--y);
+    }
+
+    @keyframes floatUp {
+      0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(var(--scale)); }
+    }
+
+    /* ── Overflow number pulse ── */
+    @keyframes overflowPulse {
+      0%, 100% { color: #e00; text-shadow: 0 0 0px #e00; }
+      50%       { color: #ff4400; text-shadow: 0 0 30px #ff4400, 0 0 60px #ff220088; }
+    }
+
+    .number-display.overflowed {
+      animation: overflowPulse 0.8s ease-in-out infinite;
+      font-size: 6rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="label">Days Jacob hasn't<br>had a Girlfriend:</div>
+    <div class="number-display" id="numberDisplay">1</div>
+    <div class="sub-label" id="subLabel"></div>
+    <div class="overflow-msg" id="overflowMsg">HEAT DEATH OF THE UNIVERSE</div>
+  </div>
+
+  <script>
+    const FP32_MAX = 3.4028235e38;
+    const LOG_MAX  = Math.log(FP32_MAX); // ln(FP32_MAX) ≈ 88.72
+    const DURATION = 12000;              // ms to reach FP32 max
+
+    const display     = document.getElementById('numberDisplay');
+    const subLabel    = document.getElementById('subLabel');
+    const overflowMsg = document.getElementById('overflowMsg');
+    const card        = document.getElementById('card');
+
+    // Cosmic milestones keyed by the value (years from now) at which they occur.
+    // The number is treated as a year count so each milestone is a real event.
+    const MILESTONES = [
+      { threshold: 1e5,   text: "100,000 years — our galaxy finishes its current rotation" },
+      { threshold: 4e6,   text: "4 million years — Andromeda is visible to the naked eye" },
+      { threshold: 4.5e9, text: "4.5 billion years — Andromeda collides with the Milky Way" },
+      { threshold: 5.4e9, text: "5.4 billion years — the Sun swells into a red giant, swallowing Earth" },
+      { threshold: 1e11,  text: "100 billion years — all star formation in the universe ceases" },
+      { threshold: 1e14,  text: "100 trillion years — the last stars burn out forever" },
+      { threshold: 1e15,  text: "1 quadrillion years — planets drift away from their dead stars" },
+      { threshold: 1e19,  text: "10 quintillion years — all stellar remnants ejected from galaxies" },
+      { threshold: 1e34,  text: "10 decillion years — protons decay, ordinary matter crumbles" },
+      { threshold: 1e38,  text: "10³⁸ years — all nucleons gone. The universe is completely silent." },
+    ];
+
+    // End-state messages that cycle in after the overflow
+    const END_LINES = [
+      "The last black hole finally evaporates.",
+      "All energy is uniformly distributed.",
+      "Nothing happens. Ever again.",
+    ];
+
+    let milestoneIndex = 0;
+    let startTime = null;
+    let done = false;
+
+    function formatNumber(n) {
+      if (n < 1000) return n.toFixed(0);
+      if (n < 1e6)  return Math.round(n).toLocaleString();
+      const exp      = Math.floor(Math.log10(n));
+      const mantissa = n / Math.pow(10, exp);
+      return `${mantissa.toFixed(4)} &times; 10<sup>${exp}</sup>`;
+    }
+
+    function animate(ts) {
+      if (done) return;
+      if (!startTime) startTime = ts;
+
+      const t     = Math.min((ts - startTime) / DURATION, 1);
+      const value = Math.exp(LOG_MAX * t);
+
+      if (value >= 1e6) display.classList.add('scientific');
+      display.innerHTML = formatNumber(value);
+
+      // Advance through milestones as the number crosses each threshold
+      while (milestoneIndex < MILESTONES.length &&
+             value >= MILESTONES[milestoneIndex].threshold) {
+        subLabel.textContent = MILESTONES[milestoneIndex].text;
+        milestoneIndex++;
+      }
+
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        done = true;
+        overflow();
+      }
+    }
+
+    function overflow() {
+      display.classList.remove('scientific');
+      display.classList.add('overflowed');
+      display.innerHTML = '&#x221E;'; // ∞
+
+      // Cycle through end-state lines with a delay between each
+      END_LINES.forEach((line, i) => {
+        setTimeout(() => { subLabel.textContent = line; }, i * 2200);
+      });
+
+      setTimeout(() => { overflowMsg.classList.add('slam'); }, 80);
+
+      card.classList.remove('impact');
+      void card.offsetWidth;
+      card.classList.add('impact');
+      card.addEventListener('animationend', () => card.classList.remove('impact'), { once: true });
+
+      floodEmojis();
+    }
+
+    function floodEmojis() {
+      const EMOJIS = ['💥','🔥','⚡','🤯','🌌','🌑','☄️','🌠','⭐','🌟','🚀','💫','🪐','🔭','✨','🪄'];
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+
+      for (let i = 0; i < 120; i++) {
+        setTimeout(() => {
+          const el = document.createElement('span');
+          el.className = 'emoji-particle';
+          el.textContent = EMOJIS[Math.random() * EMOJIS.length | 0];
+          el.style.cssText = `
+            --x:     ${Math.random() * W}px;
+            --y:     ${Math.random() * H}px;
+            --dx:    ${(Math.random() - 0.5) * 300}px;
+            --dy:    ${-100 - Math.random() * 400}px;
+            --rot:   ${(Math.random() - 0.5) * 720}deg;
+            --dur:   ${1.2 + Math.random() * 1.8}s;
+            --size:  ${1.5 + Math.random() * 3}rem;
+            --scale: ${0.2 + Math.random() * 1.2};
+          `;
+          document.body.appendChild(el);
+          el.addEventListener('animationend', () => el.remove());
+        }, Math.random() * 1200);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
