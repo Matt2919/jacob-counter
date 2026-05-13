@@ -152,7 +152,7 @@
   <script>
     const FP32_MAX = 3.4028235e38;
     const LOG_MAX  = Math.log(FP32_MAX); // ln(FP32_MAX) ≈ 88.72
-    const DURATION = 12000;              // ms to reach FP32 max
+    const DURATION = 30000;              // ms to reach FP32 max
 
     const display     = document.getElementById('numberDisplay');
     const subLabel    = document.getElementById('subLabel');
@@ -162,23 +162,23 @@
     // Cosmic milestones keyed by the value (years from now) at which they occur.
     // The number is treated as a year count so each milestone is a real event.
     const MILESTONES = [
-      { threshold: 1e5,   text: "100,000 years — our galaxy finishes its current rotation" },
-      { threshold: 4e6,   text: "4 million years — Andromeda is visible to the naked eye" },
-      { threshold: 4.5e9, text: "4.5 billion years — Andromeda collides with the Milky Way" },
-      { threshold: 5.4e9, text: "5.4 billion years — the Sun swells into a red giant, swallowing Earth" },
-      { threshold: 1e11,  text: "100 billion years — all star formation in the universe ceases" },
-      { threshold: 1e14,  text: "100 trillion years — the last stars burn out forever" },
-      { threshold: 1e15,  text: "1 quadrillion years — planets drift away from their dead stars" },
-      { threshold: 1e19,  text: "10 quintillion years — all stellar remnants ejected from galaxies" },
-      { threshold: 1e34,  text: "10 decillion years — protons decay, ordinary matter crumbles" },
-      { threshold: 1e38,  text: "10³⁸ years — all nucleons gone. The universe is completely silent." },
+      { threshold: 1e5,   text: "100,000 years — our galaxy finishes its current rotation before Jacob gets a girlfriend" },
+      { threshold: 4e6,   text: "4 million years — Andromeda is visible to the naked eye before Jacob gets a girlfriend" },
+      { threshold: 4.5e9, text: "4.5 billion years — Andromeda collides with the Milky Way before Jacob gets a girlfriend" },
+      { threshold: 5.4e9, text: "5.4 billion years — the Sun swells into a red giant, swallowing Earth before Jacob gets a girlfriend" },
+      { threshold: 1e11,  text: "100 billion years — all star formation in the universe ceases before Jacob gets a girlfriend" },
+      { threshold: 1e14,  text: "100 trillion years — the last stars burn out forever before Jacob gets a girlfriend" },
+      { threshold: 1e15,  text: "1 quadrillion years — planets drift away from their dead stars before Jacob gets a girlfriend" },
+      { threshold: 1e19,  text: "10 quintillion years — all stellar remnants ejected from galaxies before Jacob gets a girlfriend" },
+      { threshold: 1e34,  text: "10 decillion years — protons decay, ordinary matter crumbles before Jacob gets a girlfriend" },
+      { threshold: 1e38,  text: "10³⁸ years — all nucleons gone. The universe is completely silent before Jacob gets a girlfriend" },
     ];
 
     // End-state messages that cycle in after the overflow
     const END_LINES = [
-      "The last black hole finally evaporates.",
-      "All energy is uniformly distributed.",
-      "Nothing happens. Ever again.",
+      "The last black hole finally evaporates before Jacob gets a girlfriend.",
+      "All energy is uniformly distributed before Jacob gets a girlfriend.",
+      "Nothing happens. Ever again. Jacob is still single.",
     ];
 
     let milestoneIndex = 0;
